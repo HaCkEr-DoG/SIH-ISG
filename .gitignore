@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.egg
+.pytest_cache/
+
+# SQLite databases
+*.db
+*.sqlite3
+
+# Node / frontend
+node_modules/
+isg/frontend/build/
+isg/frontend/dist/
+.npm/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code internals
+.claude/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
