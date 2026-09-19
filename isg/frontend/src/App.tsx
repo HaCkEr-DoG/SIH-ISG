@@ -3,13 +3,13 @@ import { listTransactions, getDecisionCapsule } from './api/isg';
 import type { Transaction, DecisionCapsule } from './api/isg';
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  SUCCESS:      { bg: 'bg-emerald-50',  text: 'text-emerald-700', border: 'border-emerald-200', label: 'COMPLETED' },
-  QUARANTINED:  { bg: 'bg-blue-50',     text: 'text-blue-700',    border: 'border-blue-200',    label: 'REVIEW' },
-  REJECTED:     { bg: 'bg-red-50',      text: 'text-red-700',     border: 'border-red-200',     label: 'BLOCKED' },
-  FAILED:       { bg: 'bg-slate-100',   text: 'text-slate-600',   border: 'border-slate-300',   label: 'UNKNOWN' },
-  PENDING:      { bg: 'bg-sky-50',      text: 'text-sky-700',     border: 'border-sky-200',     label: 'PENDING' },
-  COMPENSATED:  { bg: 'bg-sky-50',      text: 'text-sky-700',     border: 'border-sky-200',     label: 'COMPENSATED' },
-  CANCELLED:    { bg: 'bg-slate-100',   text: 'text-slate-500',   border: 'border-slate-200',   label: 'CANCELLED' },
+  SUCCESS:      { bg: 'bg-[#e8f5e9]',  text: 'text-[#1b5e20]', border: 'border-[#138808]', label: 'COMPLETED' },
+  QUARANTINED:  { bg: 'bg-[#fff3e0]',  text: 'text-[#e65100]', border: 'border-[#FF9933]', label: 'REVIEW' },
+  REJECTED:     { bg: 'bg-[#ffebee]',  text: 'text-[#b71c1c]', border: 'border-[#e53935]', label: 'BLOCKED' },
+  FAILED:       { bg: 'bg-[#f5f5f5]',  text: 'text-[#757575]', border: 'border-[#e5e5e5]', label: 'UNKNOWN' },
+  PENDING:      { bg: 'bg-[#fff8ed]',  text: 'text-[#c65c00]', border: 'border-[#FFB566]', label: 'PENDING' },
+  COMPENSATED:  { bg: 'bg-[#fafafa]',  text: 'text-[#525252]', border: 'border-[#e5e5e5]', label: 'COMPENSATED' },
+  CANCELLED:    { bg: 'bg-[#f5f5f5]',  text: 'text-[#757575]', border: 'border-[#e5e5e5]', label: 'CANCELLED' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -36,11 +36,11 @@ function DonutChart({ txns }: { txns: Transaction[] }) {
   const r = 38;
   const circ = 2 * Math.PI * r;
   const slices = [
-    { count: counts.completed, color: '#3366cc' },
-    { count: counts.pending,   color: '#38bdf8' },
-    { count: counts.review,    color: '#1e293b' },
-    { count: counts.blocked,   color: '#ba1a1a' },
-    { count: counts.unknown,   color: '#94a3b8' },
+    { count: counts.completed, color: '#FF9933' },
+    { count: counts.pending,   color: '#FFB566' },
+    { count: counts.review,    color: '#ffd4a0' },
+    { count: counts.blocked,   color: '#e53935' },
+    { count: counts.unknown,   color: '#d4d4d4' },
   ];
 
   let offset = 0;
@@ -59,7 +59,7 @@ function DonutChart({ txns }: { txns: Transaction[] }) {
     <div className="flex items-center gap-6 py-2">
       <div className="relative w-36 h-36 flex-shrink-0">
         <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle cx="50" cy="50" r={r} fill="transparent" stroke="#f1f5f9" strokeWidth="16" />
+          <circle cx="50" cy="50" r={r} fill="transparent" stroke="#e5e5e5" strokeWidth="16" />
           {paths}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -69,19 +69,19 @@ function DonutChart({ txns }: { txns: Transaction[] }) {
       </div>
       <div className="space-y-1.5 flex-1 text-xs">
         {[
-          { label: 'Completed', color: '#3366cc', count: counts.completed },
-          { label: 'Pending',   color: '#38bdf8', count: counts.pending },
-          { label: 'Review',    color: '#1e293b', count: counts.review },
-          { label: 'Blocked',   color: '#ba1a1a', count: counts.blocked },
-          { label: 'Unknown',   color: '#94a3b8', count: counts.unknown },
+          { label: 'Completed', color: '#FF9933', count: counts.completed },
+          { label: 'Pending',   color: '#FFB566', count: counts.pending },
+          { label: 'Review',    color: '#ffd4a0', count: counts.review },
+          { label: 'Blocked',   color: '#e53935', count: counts.blocked },
+          { label: 'Unknown',   color: '#d4d4d4', count: counts.unknown },
         ].map(item => (
-          <div key={item.label} className="flex items-center justify-between py-1 border-b border-slate-100 last:border-0">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded" style={{ background: item.color }} />
-              <span className="text-slate-800 font-medium">{item.label}</span>
+          <div key={item.label} className="flex items-center justify-between py-1 border-b border-[#e5e5e5] last:border-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-2.5 h-2.5 rounded flex-shrink-0" style={{ background: item.color }} />
+              <span className="text-slate-800 font-medium truncate">{item.label}</span>
             </div>
-            <span className="font-mono text-slate-900 font-bold">
-              {item.count} ({Math.round(item.count / total * 100)}%)
+            <span className="font-mono text-slate-900 font-bold whitespace-nowrap ml-1.5 flex-shrink-0">
+              {item.count}
             </span>
           </div>
         ))}
@@ -110,7 +110,7 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
 
   return (
     <>
-      <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-slate-50 border-l border-slate-200 shadow-2xl flex flex-col z-50">
         {/* Header */}
         <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-white flex-shrink-0">
@@ -131,7 +131,7 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
               )}
             </div>
           </div>
-          <button className="p-1.5 border border-slate-200 rounded bg-slate-50 text-slate-600 hover:bg-slate-100 transition" onClick={onClose}>
+          <button className="p-1.5 border border-[#e5e5e5] rounded bg-[#f5f5f5] text-[#555555] hover:bg-[#e5e5e5] transition" onClick={onClose}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
             </svg>
@@ -141,7 +141,7 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {loading ? (
-            <div className="flex items-center justify-center h-40 text-slate-400 font-mono text-sm">Loading capsule…</div>
+            <div className="flex items-center justify-center h-40 text-slate-400 font-mono text-sm">Loading transaction…</div>
           ) : capsule ? (
             <>
               {(capsule.final_state === 'QUARANTINED' || capsule.safety_decision === 'QUARANTINE') && (
@@ -152,20 +152,20 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
                     </svg>
                   </div>
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-red-700 font-serif mb-1">Gateway Safeguard Intercepted Issue</div>
-                    <p className="text-xs text-slate-700 leading-relaxed">{capsule.quarantine_reason || 'Transaction quarantined by safety engine. Human review required.'}</p>
+                    <div className="text-xs font-bold uppercase tracking-wider text-red-700 font-serif mb-1">Issue Flagged</div>
+                    <p className="text-xs text-slate-700 leading-relaxed">{capsule.quarantine_reason || 'This transaction was flagged and paused. A human operator must review it.'}</p>
                   </div>
                 </div>
               )}
 
               {/* Cryptographic evidence */}
               <div className="bg-white border border-slate-200 rounded shadow-sm overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-900 text-white text-xs font-bold font-mono uppercase tracking-wider flex justify-between">
-                  <span>Cryptographic Audit Evidence</span>
+                <div className="px-4 py-2.5 bg-[#161616] text-[#f4f4f4] text-xs font-bold font-mono uppercase tracking-wider flex justify-between">
+                  <span>Security Record</span>
                   <span className="text-blue-300">STATE v{capsule.state_version}</span>
                 </div>
                 <div className="p-4">
-                  <div className="p-3 bg-slate-900 rounded font-mono text-slate-100 text-[11px] space-y-1.5">
+                  <div className="p-3 bg-[#161616] rounded font-mono text-[#f4f4f4] text-[11px] space-y-1.5">
                     <div><span className="text-slate-400">FINAL_STATE    :</span> <span className="font-bold">{capsule.final_state}</span></div>
                     <div><span className="text-slate-400">SAFETY_DECISION:</span> <span className="font-bold">{capsule.safety_decision}</span></div>
                     <div><span className="text-slate-400">EFFECT_AUTH    :</span> <span className={capsule.effect_authorized ? 'text-emerald-400 font-bold' : 'text-slate-500'}>{capsule.effect_authorized ? 'TRUE' : 'FALSE'}</span></div>
@@ -179,14 +179,14 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
 
               {/* Audit trail */}
               <div className="bg-white border border-slate-200 rounded shadow-sm overflow-hidden">
-                <div className="px-4 py-2.5 bg-slate-800 text-white text-xs font-bold font-mono uppercase tracking-wider">
+                <div className="px-4 py-2.5 bg-[#161616] text-[#f4f4f4] text-xs font-bold font-mono uppercase tracking-wider">
                   Audit Trail — {capsule.audit_trail.length} Events
                 </div>
                 <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto">
                   {capsule.audit_trail.slice(0, 12).map(ev => (
                     <div key={ev.sequence} className="flex items-start gap-3 px-4 py-2.5 text-xs hover:bg-slate-50 transition">
                       <span className="font-mono text-slate-400 min-w-[20px]">{ev.sequence}</span>
-                      <span className="font-mono text-blue-600 min-w-[140px] text-[11px]">{ev.stage}</span>
+                      <span className="font-mono text-[#1a237e] min-w-[140px] text-[11px]">{ev.stage}</span>
                       <span className={`font-bold min-w-[70px] text-[11px] font-mono ${
                         ev.result === 'PASS' || ev.result === 'SUCCESS' ? 'text-emerald-600' :
                         ev.result === 'QUARANTINED' || ev.result === 'FAIL' ? 'text-red-600' : 'text-amber-600'
@@ -203,13 +203,13 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
                   <div className="text-slate-800 font-bold uppercase text-[11px] tracking-wider font-mono">Operator Remediation Action</div>
                   <div className="space-y-2">
                     {[
-                      { id: 'transform', title: 'Apply Semantic Transform & Pass to Target', desc: 'Apply authorized transformation with Gateway Non-Repudiation Receipt.', recommended: true },
-                      { id: 'request',   title: 'Request Updated Certificate from Citizen',  desc: 'Route notification back to citizen via DigiLocker / SMS.',            recommended: false },
-                      { id: 'reject',    title: 'Reject Transaction & Notify Issuing Node',  desc: 'Mark transaction failed due to strict contract divergence.',           recommended: false },
+                      { id: 'transform', title: 'Approve & Forward',         desc: 'Convert the data to the required format and send it to the destination. A tamper-proof receipt is generated.', recommended: true },
+                      { id: 'request',   title: 'Ask Citizen to Resubmit',  desc: 'Send the citizen a notification via DigiLocker or SMS asking them to provide updated documents.', recommended: false },
+                      { id: 'reject',    title: 'Reject & Block',           desc: 'Mark this transaction as failed and alert the source system that it cannot proceed.', recommended: false },
                     ].map(opt => (
                       <label key={opt.id} className={`flex items-start justify-between p-3.5 bg-white rounded cursor-pointer transition ${remediationChoice === opt.id ? 'border-2 border-blue-600 shadow-sm' : 'border border-slate-200 hover:bg-slate-50'}`}>
                         <div className="flex items-start gap-3">
-                          <input type="radio" name="remediation" value={opt.id} checked={remediationChoice === opt.id} onChange={() => setRemediationChoice(opt.id)} className="mt-0.5 text-blue-600 border-slate-300 focus:ring-blue-600" />
+                          <input type="radio" name="remediation" value={opt.id} checked={remediationChoice === opt.id} onChange={() => setRemediationChoice(opt.id)} className="mt-0.5 text-[#1a237e] border-slate-300 focus:ring-blue-600" />
                           <div>
                             <div className={`text-xs font-bold font-serif ${opt.id === 'reject' ? 'text-red-700' : 'text-slate-900'}`}>{opt.title}</div>
                             <div className="text-[11px] text-slate-500 mt-0.5">{opt.desc}</div>
@@ -223,7 +223,7 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
               )}
             </>
           ) : (
-            <div className="flex items-center justify-center h-40 text-slate-400 font-mono text-sm">Failed to load capsule.</div>
+            <div className="flex items-center justify-center h-40 text-slate-400 font-mono text-sm">Could not load transaction details.</div>
           )}
         </div>
 
@@ -232,11 +232,11 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
           <button className="px-4 py-2 text-xs font-bold font-mono uppercase text-slate-700 bg-slate-100 hover:bg-slate-200 transition border border-slate-200 rounded" onClick={onClose}>CLOSE</button>
           {capsule?.final_state === 'QUARANTINED' && (
             <button
-              className="px-4 py-2 text-xs font-bold font-mono uppercase bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-2 rounded shadow-sm"
+              className="px-4 py-2 text-xs font-bold font-mono uppercase bg-[#FF9933] hover:bg-[#e6880a] text-[#111111] transition flex items-center gap-2 rounded shadow-sm"
               onClick={() => { alert(`Safety action '${remediationChoice}' applied for ${txnId}. Audit ledger updated.`); onClose(); }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
-              APPROVE & FORWARD WITH SAFETY RECEIPT
+              CONFIRM & SEND
             </button>
           )}
         </div>
@@ -283,17 +283,17 @@ export default function App() {
     <div className="h-screen flex overflow-hidden bg-slate-50 font-sans">
 
       {/* ── Sidebar ── */}
-      <aside className="w-60 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col select-none z-10">
+      <aside className="w-60 flex-shrink-0 bg-[#111111] border-r border-[#222222] flex flex-col select-none z-10">
         <div className="flex-1 flex flex-col overflow-y-auto">
-          <div className="p-4 border-b border-slate-200 flex items-center gap-3">
-            <div className="w-7 h-7 bg-slate-900 rounded flex items-center justify-center text-white flex-shrink-0">
+          <div className="p-4 border-b border-[#222222] flex items-center gap-3">
+            <div className="w-7 h-7 bg-[#FF9933] rounded flex items-center justify-center text-[#111111] flex-shrink-0">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold text-slate-900 leading-none">UNBOUND ISG</div>
-              <div className="text-[11px] text-slate-500 leading-tight mt-1">Interoperability Gateway</div>
+              <div className="text-sm font-semibold text-white leading-none">ISG</div>
+              <div className="text-[11px] text-[#888888] leading-tight mt-1">Interoperability Gateway</div>
             </div>
           </div>
           <nav className="p-3 space-y-1 flex-1 text-xs">
@@ -309,20 +309,20 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => setActiveNav(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded font-medium transition text-left ${activeNav === item.id ? 'bg-blue-50/80 text-blue-700 border-l-2 border-blue-600 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded font-medium transition text-left ${activeNav === item.id ? 'bg-[#FF9933] text-[#111111] border-l-2 border-[#FF9933] font-semibold' : 'text-[#888888] hover:bg-[#222222] hover:text-[#ffffff]'}`}
               >
                 <span>{item.label}</span>
-                {item.badge && <span className="text-[11px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200 font-medium">{item.badge}</span>}
+                {item.badge && <span className="text-[11px] font-mono bg-[#222222] text-[#888888] px-1.5 py-0.5 rounded border border-[#333333] font-medium">{item.badge}</span>}
               </button>
             ))}
           </nav>
         </div>
-        <div className="p-3 border-t border-slate-200">
+        <div className="p-3 border-t border-[#222222]">
           <div className="flex items-center gap-2.5 px-1">
-            <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center font-semibold text-xs font-mono flex-shrink-0">TB</div>
+            <div className="w-8 h-8 rounded-full bg-[#222222] border border-[#333333] text-[#888888] flex items-center justify-center font-semibold text-xs font-mono flex-shrink-0">TB</div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-semibold text-slate-900 truncate">Tharun B S</div>
-              <div className="text-[11px] text-slate-500 truncate mt-0.5">System Operator</div>
+              <div className="text-xs font-semibold text-white truncate">Tharun B S</div>
+              <div className="text-[11px] text-[#888888] truncate mt-0.5">System Operator</div>
             </div>
           </div>
         </div>
@@ -336,7 +336,7 @@ export default function App() {
           <span className="text-xs font-mono font-medium text-slate-500">Monitor interoperability transactions and system health</span>
           <div className="flex items-center gap-3">
             <span className="text-[11px] font-mono text-slate-400">{lastRefresh.toLocaleTimeString()}</span>
-            <button onClick={load} className="p-2 text-slate-500 bg-white border border-slate-200 rounded hover:bg-slate-50 hover:text-blue-600 transition shadow-sm" title="Refresh">
+            <button onClick={load} className="p-2 text-slate-500 bg-white border border-slate-200 rounded hover:bg-slate-50 hover:text-[#1a237e] transition shadow-sm" title="Refresh">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
@@ -365,7 +365,7 @@ export default function App() {
                 <span className="text-xs font-mono font-bold bg-blue-50 text-blue-700 px-3 py-1 rounded border border-blue-200">{txns.filter(t => t.status === 'QUARANTINED').length} REQUIRING ATTENTION</span>
               </div>
               <div className="bg-white border border-slate-200 rounded shadow-sm p-5 space-y-4">
-                <p className="text-xs text-slate-500 font-mono border-l-4 border-amber-400 pl-3">Quarantined transactions require human review. No automated system may resolve them. All terminal states are immutable once set.</p>
+                <p className="text-xs text-slate-500 font-mono border-l-4 border-amber-400 pl-3">These transactions are paused for human review. Once a decision is made, it cannot be changed.</p>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-slate-500 border-b border-slate-200 font-mono uppercase text-[10px]">
@@ -383,11 +383,11 @@ export default function App() {
                       <tr><td colSpan={5} className="py-8 text-center text-emerald-600 font-mono text-sm">✓ No transactions in review queue</td></tr>
                     ) : txns.filter(t => t.status === 'QUARANTINED').map(t => (
                       <tr key={t.transaction_id} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => setSelectedTxnId(t.transaction_id)}>
-                        <td className="py-3 text-blue-600 font-mono font-bold hover:underline">{t.transaction_id}</td>
+                        <td className="py-3 text-[#1a237e] font-mono font-bold hover:underline">{t.transaction_id}</td>
                         <td className="py-3 text-slate-800 font-medium">{t.applicant_name}</td>
                         <td className="py-3 text-slate-500 text-[11px] max-w-xs truncate">{t.quarantine_reason || '—'}</td>
                         <td className="py-3 text-slate-600 font-mono">{t.state_version}</td>
-                        <td className="py-3 text-right"><button className="px-3 py-1 bg-blue-600 text-white text-xs font-bold font-mono rounded hover:bg-blue-700 transition shadow-sm" onClick={e=>{e.stopPropagation();setSelectedTxnId(t.transaction_id);}}>REVIEW</button></td>
+                        <td className="py-3 text-right"><button className="px-3 py-1 bg-[#FF9933] text-[#111111] text-xs font-bold font-mono rounded hover:bg-[#e6880a] transition shadow-sm" onClick={e=>{e.stopPropagation();setSelectedTxnId(t.transaction_id);}}>REVIEW</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -404,11 +404,11 @@ export default function App() {
                 <div className="flex flex-wrap items-center gap-2.5">
                   <div className="relative">
                     <input type="text" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)}
-                      className="w-48 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono" />
+                      className="w-48 pl-8 pr-3 py-1.5 bg-white border border-[#e5e5e5] rounded text-xs text-[#111111] placeholder-[#aaaaaa] focus:bg-white focus:border-[#FF9933] focus:ring-1 focus:ring-[#FF9933] font-mono" />
                     <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
                   </div>
                   <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 rounded text-xs py-1.5 pl-2.5 pr-8 focus:ring-blue-500 focus:border-blue-500 font-mono font-semibold">
+                    className="bg-white border border-[#e5e5e5] rounded text-xs text-[#111111] py-1.5 pl-2.5 pr-8 focus:ring-[#FF9933] focus:border-[#FF9933] font-mono font-semibold">
                     <option value="">All States</option>
                     <option value="SUCCESS">Completed</option>
                     <option value="QUARANTINED">Review</option>
@@ -437,7 +437,7 @@ export default function App() {
                       <tr><td colSpan={7} className="py-8 text-center text-slate-400 font-mono">No transactions found.</td></tr>
                     ) : filtered.map(t => (
                       <tr key={t.transaction_id} className={`hover:bg-slate-50 transition cursor-pointer ${selectedTxnId === t.transaction_id ? 'bg-blue-50/40' : ''}`} onClick={() => setSelectedTxnId(t.transaction_id)}>
-                        <td className="py-2.5 text-blue-600 font-mono font-bold">{t.transaction_id}</td>
+                        <td className="py-2.5 text-[#1a237e] font-mono font-bold">{t.transaction_id}</td>
                         <td className="py-2.5 text-slate-800 font-medium">{t.applicant_name}</td>
                         <td className="py-2.5"><StatusBadge status={t.status} /></td>
                         <td className="py-2.5"><span className={`font-mono text-[11px] font-bold ${t.safety_decision === 'QUARANTINE' ? 'text-amber-600' : t.safety_decision === 'PASS' ? 'text-emerald-600' : 'text-slate-300'}`}>{t.safety_decision || '—'}</span></td>
@@ -495,7 +495,7 @@ export default function App() {
             <section className="space-y-6">
               <h2 className="text-xl font-bold text-slate-900 font-serif">Reconciliation</h2>
               <div className="bg-white border border-slate-200 rounded shadow-sm p-5 space-y-4">
-                <p className="text-xs text-slate-500 font-mono border-l-4 border-slate-300 pl-3">Transactions with unknown or unverified external outcomes pending reconciliation.</p>
+                <p className="text-xs text-slate-500 font-mono border-l-4 border-slate-300 pl-3">These transactions have outcomes that could not be confirmed. They need manual follow-up.</p>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-slate-500 border-b border-slate-200 font-mono uppercase text-[10px]">
@@ -514,7 +514,7 @@ export default function App() {
                       <tr><td colSpan={6} className="py-8 text-center text-emerald-600 font-mono">✓ No transactions pending reconciliation</td></tr>
                     ) : txns.filter(t => ['FAILED','COMPENSATED','EXPIRED','CANCELLED'].includes(t.status)).map(t => (
                       <tr key={t.transaction_id} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => setSelectedTxnId(t.transaction_id)}>
-                        <td className="py-2.5 text-blue-600 font-mono font-bold">{t.transaction_id}</td>
+                        <td className="py-2.5 text-[#1a237e] font-mono font-bold">{t.transaction_id}</td>
                         <td className="py-2.5 text-slate-800 font-medium">{t.applicant_name}</td>
                         <td className="py-2.5"><StatusBadge status={t.status} /></td>
                         <td className="py-2.5 text-center"><span className={t.effect_authorized ? 'text-emerald-600 font-bold' : 'text-slate-300'}>{t.effect_authorized ? '✓' : '—'}</span></td>
@@ -533,7 +533,7 @@ export default function App() {
             <section className="space-y-6">
               <h2 className="text-xl font-bold text-slate-900 font-serif">Audit Log</h2>
               <div className="bg-white border border-slate-200 rounded shadow-sm p-5 space-y-3">
-                <p className="text-xs text-slate-500 font-mono border-l-4 border-slate-800 pl-3">Immutable tamper-evident audit buffer. SHA-256 payload hash per event. Click any transaction to view its full cryptographic capsule.</p>
+                <p className="text-xs text-slate-500 font-mono border-l-4 border-slate-800 pl-3">A permanent record of all transactions. Click any row to view its full audit trail.</p>
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="text-slate-500 border-b border-slate-200 font-mono uppercase text-[10px]">
@@ -542,7 +542,7 @@ export default function App() {
                       <th className="pb-2 font-bold text-left">Final State</th>
                       <th className="pb-2 font-bold text-left">Safety Decision</th>
                       <th className="pb-2 font-bold text-left">State v</th>
-                      <th className="pb-2 font-bold text-right">Capsule</th>
+                      <th className="pb-2 font-bold text-right">Record</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -550,12 +550,12 @@ export default function App() {
                       <tr><td colSpan={6} className="py-8 text-center text-slate-400 font-mono">Loading…</td></tr>
                     ) : txns.map(t => (
                       <tr key={t.transaction_id} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => setSelectedTxnId(t.transaction_id)}>
-                        <td className="py-2.5 text-blue-600 font-mono font-bold text-[11px]">{t.transaction_id}</td>
+                        <td className="py-2.5 text-[#1a237e] font-mono font-bold text-[11px]">{t.transaction_id}</td>
                         <td className="py-2.5 text-slate-800 font-medium">{t.applicant_name}</td>
                         <td className="py-2.5"><StatusBadge status={t.status} /></td>
                         <td className="py-2.5"><span className={`font-mono text-[11px] font-bold ${t.safety_decision === 'QUARANTINE' ? 'text-amber-600' : t.safety_decision === 'PASS' ? 'text-emerald-600' : 'text-slate-300'}`}>{t.safety_decision || '—'}</span></td>
                         <td className="py-2.5 font-mono text-slate-600">{t.state_version}</td>
-                        <td className="py-2.5 text-right"><button className="px-2.5 py-1 bg-slate-900 text-white rounded font-bold hover:bg-slate-700 shadow-sm transition uppercase font-mono text-[10px]" onClick={e=>{e.stopPropagation();setSelectedTxnId(t.transaction_id);}}>OPEN</button></td>
+                        <td className="py-2.5 text-right"><button className="px-2.5 py-1 bg-[#f5f5f5] text-[#111111] border border-[#e5e5e5] rounded font-bold hover:bg-[#e5e5e5] shadow-sm transition uppercase font-mono text-[10px]" onClick={e=>{e.stopPropagation();setSelectedTxnId(t.transaction_id);}}>OPEN</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -590,12 +590,12 @@ export default function App() {
           {/* Metric cards */}
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Transactions Requiring Review', value: reviewCount,  trend: '↓ 18%', trendCls: 'text-blue-700 bg-blue-50 border-blue-200' },
+              { label: 'Transactions Requiring Review', value: reviewCount,  trend: '↓ 18%', trendCls: 'text-[#c65c00] bg-[#fff8ed] border-[#FFB566]' },
               { label: 'Unknown External Outcomes',     value: unknownCount, trend: '↓ 8%',  trendCls: 'text-slate-600 bg-slate-100 border-slate-200' },
               { label: 'Blocked Transactions',          value: blockedCount, trend: '↓ 13%', trendCls: 'text-red-700 bg-red-50 border-red-100' },
               { label: 'System Issues',                 value: 1,            trend: '↓ 67%', trendCls: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
             ].map(m => (
-              <div key={m.label} className="bg-white border border-slate-200 rounded p-5 shadow-sm hover:border-blue-400 transition">
+              <div key={m.label} className="bg-white border border-slate-200 rounded p-5 shadow-sm hover:border-[#FF9933] transition">
                 <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mb-2">{m.label}</div>
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="text-3xl font-bold text-slate-900 font-serif">{loading ? '…' : m.value}</span>
@@ -625,10 +625,10 @@ export default function App() {
               </div>
               <div className="relative h-44 flex items-end justify-between px-3 pt-6 pb-2 border-b border-slate-200 bg-slate-50 rounded">
                 {[
-                  { label: 'Revenue',       count: Math.max(txns.length, 4),    color: '#3366cc' },
-                  { label: 'Identity & Edu',count: Math.max(Math.round(txns.length * 0.77), 3), color: '#38bdf8' },
-                  { label: 'Scholarship',   count: Math.max(Math.round(txns.length * 0.46), 2), color: '#1e40af' },
-                  { label: 'Others',        count: 1,                            color: '#0c192c' },
+                  { label: 'Revenue',       count: Math.max(txns.length, 4),    color: '#FF9933' },
+                  { label: 'Identity & Edu',count: Math.max(Math.round(txns.length * 0.77), 3), color: '#FFB566' },
+                  { label: 'Scholarship',   count: Math.max(Math.round(txns.length * 0.46), 2), color: '#ffd4a0' },
+                  { label: 'Others',        count: 1,                            color: '#e5e5e5' },
                 ].map((b, i) => {
                   const h = Math.min(Math.round((b.count / (txns.length + 4)) * 130), 120);
                   return (
@@ -711,11 +711,11 @@ export default function App() {
                   <tbody className="divide-y divide-slate-100">
                     {attentionTxns.map(t => (
                       <tr key={t.transaction_id} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => setSelectedTxnId(t.transaction_id)}>
-                        <td className="py-2.5 text-blue-600 font-mono font-bold hover:underline">{t.transaction_id}</td>
+                        <td className="py-2.5 text-[#1a237e] font-mono font-bold hover:underline">{t.transaction_id}</td>
                         <td className="py-2.5 text-slate-500 text-[11px] max-w-[160px] truncate">{t.quarantine_reason || '—'}</td>
                         <td className="py-2.5"><StatusBadge status={t.status} /></td>
                         <td className="py-2.5 text-right">
-                          <button className="px-2.5 py-1 text-xs bg-blue-600 font-bold text-white rounded hover:bg-blue-700 transition uppercase font-mono shadow-sm" onClick={e => { e.stopPropagation(); setSelectedTxnId(t.transaction_id); }}>VIEW</button>
+                          <button className="px-2.5 py-1 text-xs bg-[#FF9933] font-bold text-[#111111] rounded hover:bg-[#e6880a] transition uppercase font-mono shadow-sm" onClick={e => { e.stopPropagation(); setSelectedTxnId(t.transaction_id); }}>VIEW</button>
                         </td>
                       </tr>
                     ))}
@@ -739,11 +739,11 @@ export default function App() {
                           <td className="py-2 text-slate-500 font-mono text-[11px] min-w-[70px]">{new Date(t.created_at).toLocaleTimeString()}</td>
                           <td className="py-2 text-slate-800 font-medium">
                             <span className="flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: t.status === 'SUCCESS' ? '#10b981' : t.status === 'QUARANTINED' ? '#3366cc' : t.status === 'REJECTED' ? '#ba1a1a' : '#94a3b8' }} />
+                              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: t.status === 'SUCCESS' ? '#138808' : t.status === 'QUARANTINED' ? '#FF9933' : t.status === 'REJECTED' ? '#e53935' : '#aaaaaa' }} />
                               {t.status === 'SUCCESS' ? 'Transaction completed' : t.status === 'QUARANTINED' ? 'Moved to review queue' : t.status === 'REJECTED' ? 'Transaction blocked' : 'Transaction created'}
                             </span>
                           </td>
-                          <td className="py-2 text-right font-mono text-blue-600 font-bold text-[11px]">{t.transaction_id}</td>
+                          <td className="py-2 text-right font-mono text-[#1a237e] font-bold text-[11px]">{t.transaction_id}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -751,7 +751,7 @@ export default function App() {
                 )}
               </div>
               <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] font-mono font-medium uppercase">
-                <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2 h-2 rounded-full bg-emerald-500" /> AUDIT BUFFER: IMMUTABLE</span>
+                <span className="flex items-center gap-1.5 text-slate-500"><span className="w-2 h-2 rounded-full bg-emerald-500" /> AUDIT LOG: LOCKED</span>
                 <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-600">SYNC: 5S</span>
               </div>
             </div>
@@ -767,11 +767,11 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <div className="relative">
                   <input type="text" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)}
-                    className="w-44 pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono" />
+                    className="w-44 pl-8 pr-3 py-1.5 bg-white border border-[#e5e5e5] rounded text-xs text-[#111111] placeholder-[#aaaaaa] focus:bg-white focus:border-[#FF9933] focus:ring-1 focus:ring-[#FF9933] font-mono" />
                   <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
                 </div>
                 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded text-xs text-slate-800 py-1.5 pl-2.5 pr-8 focus:ring-blue-500 focus:border-blue-500 font-mono font-semibold">
+                  className="bg-white border border-[#e5e5e5] rounded text-xs text-[#111111] py-1.5 pl-2.5 pr-8 focus:ring-[#FF9933] focus:border-[#FF9933] font-mono font-semibold">
                   <option value="">All States</option>
                   <option value="SUCCESS">Completed</option>
                   <option value="QUARANTINED">Review</option>
@@ -803,7 +803,7 @@ export default function App() {
                     <tr key={t.transaction_id}
                       className={`hover:bg-slate-50 transition cursor-pointer ${selectedTxnId === t.transaction_id ? 'bg-blue-50/40' : ''}`}
                       onClick={() => setSelectedTxnId(t.transaction_id)}>
-                      <td className="py-2.5 text-blue-600 font-mono font-bold hover:underline">{t.transaction_id}</td>
+                      <td className="py-2.5 text-[#1a237e] font-mono font-bold hover:underline">{t.transaction_id}</td>
                       <td className="py-2.5 text-slate-800 font-medium">{t.applicant_name}</td>
                       <td className="py-2.5"><StatusBadge status={t.status} /></td>
                       <td className="py-2.5">
