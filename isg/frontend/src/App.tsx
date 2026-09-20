@@ -458,8 +458,8 @@ export default function App() {
               <h2 className="text-xl font-bold text-slate-900 font-serif">System Connectivity</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                  { id: 'REV-001', name: 'Revenue Department',    color: '#3366cc', owner: 'Dept. of Revenue, Maharashtra', schema: 'v2.4', caps: ['income_fetch','income_verify','annual_certificate'] },
-                  { id: 'EDU-001', name: 'Education Department',  color: '#0891b2', owner: 'Dept. of Education, Maharashtra', schema: 'v1.8', caps: ['enrollment_verify','marks_fetch','institution_verify'] },
+                  { id: 'REV-001', name: 'Income Tax Department',  color: '#3366cc', owner: 'Ministry of Finance / CBDT', schema: 'v2.4', caps: ['income_fetch','income_verify','annual_certificate'] },
+                  { id: 'EDU-001', name: 'Education Department',  color: '#0891b2', owner: 'UGC / Academic Bank of Credits', schema: 'v1.8', caps: ['enrollment_verify','marks_fetch','institution_verify'] },
                   { id: 'IDN-001', name: 'Identity Registry',     color: '#7c3aed', owner: 'NIC / Aadhaar Authority',         schema: 'v3.1', caps: ['identity_verify','dob_fetch','name_match'] },
                   { id: 'SCH-001', name: 'Scholarship & Welfare', color: '#059669', owner: 'Dept. of Social Welfare',         schema: 'v1.2', caps: ['eligibility_check','disbursement_auth','status_update'] },
                 ].map(sys => (
@@ -572,7 +572,7 @@ export default function App() {
                 {[
                   { label: 'Gateway Version', value: '2.0.0-prototype' },
                   { label: 'Safety Kernel', value: 'DETERMINISTIC v1 — ai_was_final_authority: ALWAYS FALSE' },
-                  { label: 'Prototype Disclaimer', value: 'SIH 2026 PS26129 — Maharashtra Scholarship Eligibility Demo' },
+                  { label: 'Prototype Disclaimer', value: 'SIH 2026 PS26129 — NSP Eligibility Verification Demo' },
                   { label: 'Environment', value: 'SIMULATION — No real government systems connected' },
                 ].map(item => (
                   <div key={item.label} className="bg-white border border-slate-200 rounded p-4 shadow-sm">

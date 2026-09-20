@@ -7,7 +7,7 @@
 
 ISG is a safety/control layer that sits between government systems with different schemas, identifiers, semantics, and policies. It determines whether information and requested effects can safely cross system boundaries.
 
-**Prototype use case:** Maharashtra Scholarship Eligibility Verification — connecting Revenue, Education, and Identity systems that each speak a different schema.
+**Prototype use case:** National Scholarship Portal (NSP) Eligibility Verification — connecting Income Tax, Education, and Identity systems that each speak a different schema.
 
 ## Stack
 
@@ -66,7 +66,7 @@ ISG Safety Pipeline (20 deterministic stages):
   → OBSERVATION → RECOVERY → AUDIT → TERMINAL STATE
       ↓
 ┌──────────────────┐
-│  Revenue System  │  v2.7 · family_id (FAM-xxxx)
+│  Income Tax Sys. │  v2.7 · family_id (FAM-xxxx)
 │  Education Sys.  │  v3.1 · student_id (EDU-xxxx)
 │  Identity Sys.   │  v1.5 · identity_ref (ID-xxxx)
 └──────────────────┘
@@ -129,4 +129,4 @@ All 16 safety invariant tests must pass. These prove:
 
 ## Disclaimer
 
-This prototype simulates government systems using entirely synthetic data. It does not connect to any real Maharashtra government system, does not use any real citizen data, and does not claim production readiness, official certification, or legal authority.
+This prototype simulates government systems using entirely synthetic data. It does not connect to any real government system, does not use any real citizen data, and does not claim production readiness, official certification, or legal authority.
