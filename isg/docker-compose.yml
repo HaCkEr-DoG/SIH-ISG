@@ -4,18 +4,16 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: isg_user
-      POSTGRES_PASSWORD: isg_pass
-      POSTGRES_DB: isg_db
+      POSTGRES_USER: ${POSTGRES_USER:-isg_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-isg_db}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U isg_user -d isg_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-isg_user} -d ${POSTGRES_DB:-isg_db}"]
       interval: 5s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
 
   backend:
     build: ./backend
@@ -23,10 +21,11 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://isg_user:isg_pass@db:5432/isg_db
-      SECRET_KEY: isg-prototype-secret-key-2026-sih
-      ENVIRONMENT: demo
-      DEBUG: "true"
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      DEMO_API_KEY: ${DEMO_API_KEY}
+      DEBUG: ${DEBUG:-false}
+      ENVIRONMENT: ${ENVIRONMENT:-demo}
     ports:
       - "8000:8000"
     volumes:

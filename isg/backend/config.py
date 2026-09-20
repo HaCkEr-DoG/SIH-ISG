@@ -9,8 +9,10 @@ class Settings(BaseSettings):
 
     # Default to SQLite for local demo; override with DATABASE_URL for Docker/Postgres
     database_url: str = "sqlite:///./isg_demo.db"
-    secret_key: str = "isg-prototype-secret-key-2026-sih"
-    debug: bool = True
+    secret_key: str = "isg-demo-key-sih2026-change-in-prod"
+    demo_api_key: str = "isg-demo-token-sih2026"
+    allowed_origins: str = "http://localhost:3000"
+    debug: bool = False
     isg_version: str = "1.0.0-prototype"
     environment: str = "demo"
 

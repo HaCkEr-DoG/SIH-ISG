@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session
 import subprocess, sys, os
 
 from database import get_db
+from auth import verify_token
 
-router = APIRouter(prefix="/api/safety", tags=["safety"])
+router = APIRouter(prefix="/api/safety", tags=["safety"], dependencies=[Depends(verify_token)])
 
 SAFETY_TESTS = [
     {

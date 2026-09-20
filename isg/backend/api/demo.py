@@ -17,8 +17,9 @@ from core.isg_pipeline import run_scholarship_pipeline, run_recovery_pipeline
 from core.audit_engine import AuditEngine
 from core.consent_policy import ConsentRegistry
 from seed.seed_data import seed_all
+from auth import verify_token
 
-router = APIRouter(prefix="/api/demo", tags=["demo"])
+router = APIRouter(prefix="/api/demo", tags=["demo"], dependencies=[Depends(verify_token)])
 _audit = AuditEngine()
 _consent_registry = ConsentRegistry()
 
