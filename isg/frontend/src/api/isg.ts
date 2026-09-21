@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
-const TOKEN = (import.meta as any).env?.VITE_API_TOKEN || 'isg-demo-token-sih2026';
+const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:8000';
+const TOKEN = (import.meta as any).env?.VITE_API_TOKEN ?? 'isg-demo-token-sih2026';
 
 export const api = axios.create({
   baseURL: BASE,
