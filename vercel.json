@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "cd isg/frontend && npm install --legacy-peer-deps && VITE_API_URL='' VITE_API_TOKEN='isg-demo-token-sih2026' npm run build",
+  "outputDirectory": "isg/frontend/build",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index" }
+  ]
+}
