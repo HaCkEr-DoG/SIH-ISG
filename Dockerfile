@@ -27,5 +27,5 @@ ENV DEMO_API_KEY=isg-demo-token-sih2026
 ENV ALLOWED_ORIGINS=*
 ENV ENVIRONMENT=demo
 
-EXPOSE 8000
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+EXPOSE 7860
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-7860}
