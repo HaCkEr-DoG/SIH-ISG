@@ -1,8 +1,12 @@
 import axios from 'axios';
 
-const BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+const BASE = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:8000';
+const TOKEN = (import.meta as any).env?.VITE_API_TOKEN ?? 'isg-demo-token-sih2026';
 
-export const api = axios.create({ baseURL: BASE });
+export const api = axios.create({
+  baseURL: BASE,
+  headers: { Authorization: `Bearer ${TOKEN}` },
+});
 
 export type Scenario = 'VALID' | 'SEMANTIC_MISMATCH' | 'IDENTITY_MISMATCH' | 'CONSENT_FAILURE' | 'TIMEOUT' | 'RECOVERY' | 'REPLAY';
 

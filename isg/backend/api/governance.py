@@ -2,15 +2,16 @@
 ISG Governance API — System Passports, Contract Registry, AI Mapping Studio.
 """
 from __future__ import annotations
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
 from core.passport_registry import PASSPORT_REGISTRY
 from core.contract_registry import CONTRACT_REGISTRY
 from core.ai_gateway import suggest_income_mapping, MULTILINGUAL_FIELD_EXAMPLES
+from auth import verify_token
 
-router = APIRouter(prefix="/api/governance", tags=["governance"])
+router = APIRouter(prefix="/api/governance", tags=["governance"], dependencies=[Depends(verify_token)])
 
 
 # ── PASSPORTS ────────────────────────────────────────────────────────────────

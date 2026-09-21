@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import ISGTransaction, ScholarshipApplication
+from auth import verify_token
 from core.audit_engine import AuditEngine
 
-router = APIRouter(prefix="/api/audit", tags=["audit"])
+router = APIRouter(prefix="/api/audit", tags=["audit"], dependencies=[Depends(verify_token)])
 _audit = AuditEngine()
 
 

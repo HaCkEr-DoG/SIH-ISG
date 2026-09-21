@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: unbound-isg
+    runtime: python
+    rootDir: isg/backend
+    buildCommand: cd ../frontend && npm install --legacy-peer-deps && VITE_API_URL="" VITE_API_TOKEN="isg-demo-token-sih2026" npm run build && cd ../backend && pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: DEMO_API_KEY
+        value: isg-demo-token-sih2026
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: demo
