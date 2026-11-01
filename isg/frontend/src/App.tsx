@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { listTransactions, getDecisionCapsule, applyRemediation } from './api/isg';
+import { listTransactions, getDecisionCapsule, applyRemediation, listCitizens, verifyCitizen, agentEnroll } from './api/isg';
 import type { Transaction, DecisionCapsule } from './api/isg';
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; border: string; label: string }> = {
@@ -275,7 +275,183 @@ function InspectorDrawer({ txnId, onClose, onRemediated }: { txnId: string | nul
   );
 }
 
-type NavItem = 'overview' | 'transactions' | 'systems' | 'review' | 'reconciliation' | 'audit' | 'settings';
+type NavItem = 'overview' | 'transactions' | 'systems' | 'review' | 'reconciliation' | 'audit' | 'citizen' | 'settings';
+
+// ── Citizen Portal ────────────────────────────────────────────────────────────
+
+const PROGRAM_COLORS: Record<string, string> = {
+  'NSP-001':  '#138808',
+  'PMJAY-001':'#1565c0',
+  'NFSA-001': '#e65100',
+  'PMAY-001': '#6a1b9a',
+};
+
+function CitizenPortal() {
+  const [citizens, setCitizens] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [result, setResult] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [enrolling, setEnrolling] = useState<string | null>(null);
+  const [enrollResults, setEnrollResults] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    listCitizens().then(r => setCitizens(r.data.citizens || [])).catch(() => {});
+  }, []);
+
+  const handleVerify = async () => {
+    if (!selected) return;
+    setVerifying(true);
+    setResult(null);
+    setError(null);
+    setEnrollResults({});
+    try {
+      const r = await verifyCitizen(selected.citizen_id, selected.family_id, selected.name, selected.dob);
+      setResult(r.data);
+    } catch (e: any) {
+      setError(e?.response?.data?.detail || 'Verification failed.');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleEnroll = async (programId: string) => {
+    if (!selected) return;
+    setEnrolling(programId);
+    try {
+      const r = await agentEnroll(selected.citizen_id, programId);
+      setEnrollResults(prev => ({ ...prev, [programId]: r.data }));
+    } catch (e: any) {
+      setEnrollResults(prev => ({ ...prev, [programId]: { decision: 'ERROR', reason: e?.response?.data?.detail || 'Request failed.' } }));
+    } finally {
+      setEnrolling(null);
+    }
+  };
+
+  const statusColor = (s: string) => s === 'VERIFIED' ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+    : s === 'HOLD' ? 'text-amber-700 bg-amber-50 border-amber-300'
+    : 'text-slate-600 bg-slate-50 border-slate-200';
+
+  const checkColor = (s: string) => s === 'VERIFIED' ? 'text-emerald-600' : s === 'HOLD' || s === 'MISMATCH' ? 'text-amber-600' : 'text-slate-400';
+
+  return (
+    <section className="space-y-6 max-w-4xl">
+      <div>
+        <h2 className="text-xl font-bold text-slate-900 font-serif">Citizen Verification Portal</h2>
+        <p className="text-xs text-slate-500 mt-1 font-mono border-l-4 border-[#FF9933] pl-3">
+          Verify once, apply everywhere — source-pulled data, no document uploads, no forgery possible.
+        </p>
+      </div>
+
+      {/* Citizen picker */}
+      <div className="bg-white border border-slate-200 rounded p-5 shadow-sm space-y-4">
+        <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Citizen</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {citizens.map(c => (
+            <button
+              key={c.citizen_id}
+              onClick={() => { setSelected(c); setResult(null); setError(null); setEnrollResults({}); }}
+              className={`text-left px-4 py-3 rounded border text-sm transition ${selected?.citizen_id === c.citizen_id ? 'bg-[#FF9933] border-[#FF9933] text-[#111]' : 'border-slate-200 hover:border-[#FF9933] hover:bg-orange-50 text-slate-700'}`}
+            >
+              <div className="font-semibold">{c.name}</div>
+              <div className="text-[11px] font-mono mt-0.5 opacity-70">{c.citizen_id} · DOB {c.dob}</div>
+            </button>
+          ))}
+        </div>
+        {selected && (
+          <button
+            onClick={handleVerify}
+            disabled={verifying}
+            className="mt-2 px-6 py-2.5 bg-[#111111] text-white rounded font-semibold text-sm hover:bg-[#333] transition disabled:opacity-50 font-mono"
+          >
+            {verifying ? 'PULLING FROM SOURCE AGENCIES…' : '▶ VERIFY NOW — pull from source'}
+          </button>
+        )}
+      </div>
+
+      {/* Source pull callout */}
+      {!result && !verifying && (
+        <div className="bg-[#fff8ed] border border-[#FFB566] rounded p-4 text-sm text-[#c65c00] font-mono">
+          No document uploads. All data pulled directly from Revenue Dept, Aadhaar / Identity Registry, and Municipal Address Registry. Source-verified records cannot be forged.
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded p-4 text-sm text-red-700 font-mono">{error}</div>
+      )}
+
+      {result && (
+        <>
+          {/* Verification status banner */}
+          <div className={`flex items-center gap-3 rounded border px-5 py-4 ${statusColor(result.verification_status)}`}>
+            <span className="text-lg font-bold font-mono">{result.verification_status}</span>
+            <span className="text-sm">{result.hold_reason || 'All three source checks passed. Profile is valid for 180 days.'}</span>
+          </div>
+
+          {/* Source check cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {result.source_checks?.map((c: any) => (
+              <div key={c.field} className="bg-white border border-slate-200 rounded p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">{c.field}</div>
+                  <span className={`text-[11px] font-bold font-mono ${checkColor(c.status)}`}>{c.status}</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono">{c.source}</div>
+                <div className="text-xs text-slate-700 mt-2 leading-relaxed">{c.detail}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Program eligibility grid */}
+          <div className="bg-white border border-slate-200 rounded p-5 shadow-sm">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Cross-Program Eligibility</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {result.programs_eligible?.map((p: any) => {
+                const enr = enrollResults[p.id];
+                return (
+                  <div key={p.id} className={`rounded border p-4 ${p.eligible ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs font-bold" style={{ color: PROGRAM_COLORS[p.id] || '#333' }}>{p.name}</div>
+                      <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${p.eligible ? 'text-emerald-700 bg-emerald-100 border-emerald-300' : 'text-slate-500 bg-slate-100 border-slate-200'}`}>
+                        {p.eligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 font-mono mb-1">{p.dept}</div>
+                    <div className="text-xs text-slate-600 mb-3">{p.reason}</div>
+                    {p.eligible && result.verification_status === 'VERIFIED' && (
+                      <div>
+                        {!enr ? (
+                          <button
+                            onClick={() => handleEnroll(p.id)}
+                            disabled={enrolling === p.id}
+                            className="text-[11px] font-mono font-bold px-3 py-1.5 bg-[#111] text-white rounded hover:bg-[#333] transition disabled:opacity-50"
+                          >
+                            {enrolling === p.id ? 'ASKING AGENT…' : '⚡ ENROLL VIA AGENT'}
+                          </button>
+                        ) : (
+                          <div className={`text-[11px] font-mono font-bold px-3 py-1.5 rounded border inline-block ${enr.decision === 'ENROLL' ? 'text-emerald-700 bg-emerald-100 border-emerald-300' : 'text-amber-700 bg-amber-100 border-amber-300'}`}>
+                            {enr.decision}: {enr.reason?.slice(0, 60)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Integrity footer */}
+          <div className="text-[11px] font-mono text-slate-400 border-t border-slate-100 pt-3">
+            PROFILE_HASH: {result.profile_hash} · EXPIRES: {new Date(result.expires_at).toLocaleDateString()} · {result.fraud_note}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>('overview');
@@ -334,6 +510,7 @@ export default function App() {
               { id: 'review',         label: 'Review Queue',   badge: reviewCount  > 0 ? String(reviewCount)  : null },
               { id: 'reconciliation', label: 'Reconciliation', badge: unknownCount > 0 ? String(unknownCount) : null },
               { id: 'audit',          label: 'Audit',          badge: null },
+              { id: 'citizen',        label: 'Citizen Portal', badge: null },
               { id: 'settings',       label: 'Settings',       badge: null },
             ] as { id: NavItem; label: string; badge: string | null }[]).map(item => (
               <button
@@ -594,6 +771,9 @@ export default function App() {
               </div>
             </section>
           )}
+
+          {/* ── Citizen Portal view ── */}
+          {activeNav === 'citizen' && <CitizenPortal />}
 
           {/* ── Settings view ── */}
           {activeNav === 'settings' && (

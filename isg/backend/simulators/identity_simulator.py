@@ -105,6 +105,28 @@ IDENTITY_RECORDS = {
         "source": "IDENTITY_SYSTEM_MH",
         "source_version": "v1.5",
     },
+    "ID-6001": {
+        "identity_ref": "ID-6001",
+        "name": "Lakshmi Devi",
+        "dob": "1985-03-10",
+        "identity_provider": "UIDAI_PROXY_MH",
+        "verification_status": "VERIFIED",
+        "last_verified": "2025-09-01",
+        "evidence_type": "AADHAAR_LINKED",
+        "source": "IDENTITY_SYSTEM_MH",
+        "source_version": "v1.5",
+    },
+    "ID-6002": {
+        "identity_ref": "ID-6002",
+        "name": "Ramesh Nair",
+        "dob": "1979-07-22",
+        "identity_provider": "UIDAI_PROXY_MH",
+        "verification_status": "VERIFIED",
+        "last_verified": "2025-09-15",
+        "evidence_type": "AADHAAR_LINKED",
+        "source": "IDENTITY_SYSTEM_MH",
+        "source_version": "v1.5",
+    },
 }
 
 # Map from application identity_ref to candidate set
@@ -116,6 +138,8 @@ IDENTITY_CANDIDATE_SETS: dict[str, list[str]] = {
     "ID-3001": ["ID-3001"],
     "ID-4001": ["ID-4001"],
     "ID-1003": ["ID-1003"],
+    "ID-6001": ["ID-6001"],
+    "ID-6002": ["ID-6002"],
 }
 
 

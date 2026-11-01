@@ -119,3 +119,16 @@ export const getSchemaDriftStatus = () =>
 
 export const listSafetyTests = () => api.get('/api/safety/tests');
 export const runSafetyTests = () => api.post('/api/safety/run-tests');
+
+// ── Citizen Portal ────────────────────────────────────────────────────────────
+
+export const listCitizens = () => api.get('/api/citizen/citizens');
+
+export const verifyCitizen = (citizenId: string, familyId: string, name: string, dob: string) =>
+  api.post('/api/citizen/verify', { citizen_id: citizenId, family_id: familyId, name, dob });
+
+export const getCitizenProfile = (citizenId: string) =>
+  api.get(`/api/citizen/profile/${citizenId}`);
+
+export const agentEnroll = (citizenId: string, programId: string) =>
+  api.post('/api/citizen/agent/enroll', { citizen_id: citizenId, program_id: programId });

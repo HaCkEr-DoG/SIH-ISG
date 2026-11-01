@@ -16,6 +16,7 @@ from api.demo import router as demo_router
 from api.audit_routes import router as audit_router
 from api.governance import router as governance_router
 from api.safety_suite import router as safety_router
+from api.citizen_routes import router as citizen_router
 from seed.seed_data import seed_all
 
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -61,6 +62,7 @@ app.include_router(demo_router)
 app.include_router(audit_router)
 app.include_router(governance_router)
 app.include_router(safety_router)
+app.include_router(citizen_router)
 
 if _SERVE_FRONTEND:
     _assets_dir = os.path.join(_FRONTEND_BUILD, "assets")

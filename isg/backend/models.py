@@ -177,6 +177,47 @@ class ContractRecord(Base):
     activated_at = Column(DateTime, nullable=False)
 
 
+class CitizenProfile(Base):
+    """
+    Stores a verified citizen profile built by pulling data from source agencies.
+    One profile covers all programs — verify once, apply everywhere.
+    """
+    __tablename__ = "citizen_profiles"
+
+    id = Column(String, primary_key=True)
+    citizen_id = Column(String, nullable=False, unique=True, index=True)
+    name = Column(String, nullable=False)
+    dob = Column(String, nullable=False)
+
+    # Income — pulled from Revenue Dept
+    income_annual_inr = Column(Integer, nullable=True)
+    income_source_system = Column(String, nullable=True)
+    income_verified_at = Column(DateTime, nullable=True)
+    income_hold_reason = Column(String, nullable=True)
+
+    # Identity — pulled from Aadhaar / Identity Registry
+    identity_evidence_type = Column(String, nullable=True)
+    identity_source_system = Column(String, nullable=True)
+    identity_verified_at = Column(DateTime, nullable=True)
+
+    # Residency — pulled from Municipal Registry
+    residency_district = Column(String, nullable=True)
+    residency_address = Column(String, nullable=True)
+    residency_source_system = Column(String, nullable=True)
+    residency_verified_at = Column(DateTime, nullable=True)
+
+    # Computed eligibility across programs
+    programs_eligible = Column(JSON, nullable=True)
+
+    # Profile integrity
+    profile_hash = Column(String, nullable=True)
+    verification_status = Column(String, default="PENDING")
+    hold_reason = Column(String, nullable=True)
+    consent_ref = Column(String, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    expires_at = Column(DateTime, nullable=True)
+
+
 class EffectRecord(Base):
     __tablename__ = "effect_records"
 

@@ -90,6 +90,33 @@ REVENUE_RECORDS = {
         "assessment_type": "VERIFIED",
         "family_members": 4,
     },
+    # Health Card cases
+    "FAM-6001": {
+        "family_id": "FAM-6001",
+        "beneficiary_name": "Lakshmi D.",
+        "income_value": 96000,
+        "income_period": "ANNUAL",
+        "period_reference": "FY2025-26",
+        "currency": "INR",
+        "source": "REVENUE_DEPT_MH",
+        "source_version": "v2.7",
+        "assessed_date": "2025-10-05",
+        "assessment_type": "VERIFIED",
+        "family_members": 5,
+    },
+    "FAM-6002": {
+        "family_id": "FAM-6002",
+        "beneficiary_name": "Ramesh N.",
+        "income_value": 18000,
+        "income_period": "MONTHLY",           # <-- MONTHLY, triggers HOLD
+        "period_reference": "OCT2025",
+        "currency": "INR",
+        "source": "REVENUE_DEPT_MH",
+        "source_version": "v2.7",
+        "assessed_date": "2025-10-31",
+        "assessment_type": "PAYSLIP",
+        "family_members": 4,
+    },
     # Additional valid cases
     "FAM-1003": {
         "family_id": "FAM-1003",
