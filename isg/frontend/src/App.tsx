@@ -372,7 +372,7 @@ function CitizenPortal() {
       {/* Source pull callout */}
       {!result && !verifying && (
         <div className="bg-[#fff8ed] border border-[#FFB566] rounded p-4 text-sm text-[#c65c00] font-mono">
-          No document uploads. All data pulled directly from Revenue Dept, Aadhaar / Identity Registry, and Municipal Address Registry. Source-verified records cannot be forged.
+          No document uploads. All data pulled directly from Income Tax / Revenue Dept (ITR-verified), Aadhaar / Identity Registry, and Municipal Address Registry. Source-verified records cannot be forged — AI-generated pay stubs have nothing to replace.
         </div>
       )}
 
@@ -393,7 +393,7 @@ function CitizenPortal() {
             {result.source_checks?.map((c: any) => (
               <div key={c.field} className="bg-white border border-slate-200 rounded p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">{c.field}</div>
+                  <div className="text-[10px] font-mono font-bold text-slate-400 uppercase">{c.field === 'income' ? 'Income + Tax (ITR)' : c.field}</div>
                   <span className={`text-[11px] font-bold font-mono ${checkColor(c.status)}`}>{c.status}</span>
                 </div>
                 <div className="text-[11px] text-slate-500 font-mono">{c.source}</div>
@@ -783,6 +783,8 @@ export default function App() {
                 {[
                   { label: 'Gateway Version', value: '2.0.0-prototype' },
                   { label: 'Safety Kernel', value: 'DETERMINISTIC v1 — ai_was_final_authority: ALWAYS FALSE' },
+                  { label: 'Problem Scale', value: 'GAO estimates benefit fraud costs governments up to $500 billion/year. AI can forge a pay stub in seconds. Source-pull architecture makes forgeable documents structurally irrelevant.' },
+                  { label: 'Renewal Mandate', value: 'From 2027, states must re-verify millions of enrollees every 6 months. ISG profiles expire in 180 days — one re-verify tap, no documents, all programs updated simultaneously.' },
                   { label: 'Prototype Disclaimer', value: 'SIH 2026 PS26129 — Multi-department Information Safety Gateway Demo' },
                   { label: 'Environment', value: 'SIMULATION — No real government systems connected' },
                 ].map(item => (
