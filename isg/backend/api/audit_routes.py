@@ -1,8 +1,9 @@
 """ISG Audit and Decision Capsule API."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from database import get_db
-from models import ISGTransaction, ScholarshipApplication
+from models import ISGTransaction, ScholarshipApplication, TransactionStatus
 from auth import verify_token
 from core.audit_engine import AuditEngine
 
@@ -68,6 +69,70 @@ async def list_transactions(db: Session = Depends(get_db)):
             "effect_observed": tx.effect_observed,
         })
     return result
+
+
+class RemediationRequest(BaseModel):
+    action: str  # "transform" | "request" | "reject"
+    operator_note: str = ""
+
+
+_ACTION_STATUS = {
+    "transform": TransactionStatus.SUCCESS,
+    "request":   TransactionStatus.INITIATED,
+    "reject":    TransactionStatus.REJECTED,
+}
+
+_ACTION_LABEL = {
+    "transform": "APPROVE_AND_FORWARD",
+    "request":   "REQUEST_RESUBMISSION",
+    "reject":    "REJECT_AND_BLOCK",
+}
+
+
+@router.post("/remediation/{transaction_id}")
+async def apply_remediation(
+    transaction_id: str,
+    body: RemediationRequest,
+    db: Session = Depends(get_db),
+):
+    """Operator applies a remediation action to a QUARANTINED transaction."""
+    tx = db.query(ISGTransaction).filter_by(id=transaction_id).first()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+    if tx.status != TransactionStatus.QUARANTINED:
+        raise HTTPException(status_code=400, detail="Transaction is not in QUARANTINED state.")
+
+    new_status = _ACTION_STATUS.get(body.action, TransactionStatus.INITIATED)
+    label = _ACTION_LABEL.get(body.action, body.action.upper())
+
+    # Append operator audit event
+    import uuid, datetime
+    from models import AuditEvent
+    seq = len(tx.audit_events) + 1
+    event = AuditEvent(
+        id=str(uuid.uuid4()),
+        transaction_id=transaction_id,
+        event_type="OPERATOR_ACTION",
+        stage="OPERATOR",
+        result=label,
+        detail=f"Operator applied remediation '{label}'. {body.operator_note}".strip(". ") + ".",
+        payload_hash=None,
+        evidence={"action": body.action, "operator_note": body.operator_note},
+        created_at=datetime.datetime.utcnow(),
+        sequence=seq,
+    )
+    db.add(event)
+
+    tx.status = new_status
+    tx.state_version += 1
+    db.commit()
+
+    return {
+        "transaction_id": transaction_id,
+        "action": label,
+        "new_status": new_status.value,
+        "message": f"Remediation '{label}' applied. Transaction is now {new_status.value}.",
+    }
 
 
 @router.post("/consent/revoke/{application_id}")

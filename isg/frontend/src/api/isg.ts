@@ -87,6 +87,9 @@ export const getDecisionCapsule = (txId: string) =>
 export const getTransactionAudit = (txId: string) =>
   api.get(`/api/audit/transaction/${txId}`);
 
+export const applyRemediation = (txId: string, action: string, note = '') =>
+  api.post(`/api/audit/remediation/${txId}`, { action, operator_note: note });
+
 // ── Governance ────────────────────────────────────────────────────────────────
 
 export const listPassports = () => api.get('/api/governance/passports');
