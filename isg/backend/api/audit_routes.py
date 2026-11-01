@@ -95,12 +95,12 @@ async def apply_remediation(
     body: RemediationRequest,
     db: Session = Depends(get_db),
 ):
-    """Operator applies a remediation action to a QUARANTINED transaction."""
+    """Operator applies a remediation action to a transaction on hold."""
     tx = db.query(ISGTransaction).filter_by(id=transaction_id).first()
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found.")
     if tx.status != TransactionStatus.QUARANTINED:
-        raise HTTPException(status_code=400, detail="Transaction is not in QUARANTINED state.")
+        raise HTTPException(status_code=400, detail="Transaction is not currently on hold.")
 
     new_status = _ACTION_STATUS.get(body.action, TransactionStatus.INITIATED)
     label = _ACTION_LABEL.get(body.action, body.action.upper())

@@ -56,16 +56,16 @@ export default function QuarantineCenter() {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>Quarantine Center & Transaction Review</h2>
+      <h2 style={styles.title}>Hold Queue & Transaction Review</h2>
       <p style={styles.subtitle}>
-        Quarantined transactions require human review before any resolution. No automated
-        system may resolve a QUARANTINED transaction. All terminal states are immutable.
+        Transactions on hold require human review before any resolution. No automated
+        system may act on a transaction on hold. All terminal states are immutable.
       </p>
 
       <div style={styles.stats}>
         <div style={styles.statCard}>
           <div style={{ ...styles.statNum, color: '#fbbf24' }}>{quarantined.length}</div>
-          <div style={styles.statLabel}>Quarantined</div>
+          <div style={styles.statLabel}>On Hold</div>
         </div>
         <div style={styles.statCard}>
           <div style={{ ...styles.statNum, color: '#4ade80' }}>
@@ -89,12 +89,12 @@ export default function QuarantineCenter() {
       {quarantined.length > 0 && (
         <div style={styles.section}>
           <div style={styles.sectionTitle}>
-            <span style={styles.warningIcon}>⚠</span> Quarantined — Require Human Review
+            <span style={styles.warningIcon}>⚠</span> On Hold — Require Human Review
           </div>
           <table style={styles.table}>
             <thead>
               <tr>
-                {['Transaction ID', 'Application', 'Applicant', 'Quarantine Reason', 'State v'].map(h => (
+                {['Transaction ID', 'Application', 'Applicant', 'Hold Reason', 'State v'].map(h => (
                   <th key={h} style={styles.th}>{h}</th>
                 ))}
               </tr>

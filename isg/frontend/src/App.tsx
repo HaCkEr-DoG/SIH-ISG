@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { listTransactions, getDecisionCapsule } from './api/isg';
+import { listTransactions, getDecisionCapsule, applyRemediation } from './api/isg';
 import type { Transaction, DecisionCapsule } from './api/isg';
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; border: string; label: string }> = {
   SUCCESS:      { bg: 'bg-[#e8f5e9]',  text: 'text-[#1b5e20]', border: 'border-[#138808]', label: 'COMPLETED' },
-  QUARANTINED:  { bg: 'bg-[#fff3e0]',  text: 'text-[#e65100]', border: 'border-[#FF9933]', label: 'REVIEW' },
+  QUARANTINED:  { bg: 'bg-[#fff3e0]',  text: 'text-[#e65100]', border: 'border-[#FF9933]', label: 'HOLD' },
   REJECTED:     { bg: 'bg-[#ffebee]',  text: 'text-[#b71c1c]', border: 'border-[#e53935]', label: 'BLOCKED' },
   FAILED:       { bg: 'bg-[#f5f5f5]',  text: 'text-[#757575]', border: 'border-[#e5e5e5]', label: 'UNKNOWN' },
   PENDING:      { bg: 'bg-[#fff8ed]',  text: 'text-[#c65c00]', border: 'border-[#FFB566]', label: 'PENDING' },
@@ -90,15 +90,20 @@ function DonutChart({ txns }: { txns: Transaction[] }) {
   );
 }
 
-function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: () => void }) {
+function InspectorDrawer({ txnId, onClose, onRemediated }: { txnId: string | null; onClose: () => void; onRemediated?: () => void }) {
   const [capsule, setCapsule] = useState<DecisionCapsule | null>(null);
   const [loading, setLoading] = useState(false);
   const [remediationChoice, setRemediationChoice] = useState('transform');
+  const [operatorNote, setOperatorNote] = useState('');
+  const [remediating, setRemediating] = useState(false);
+  const [remediationDone, setRemediationDone] = useState<string | null>(null);
 
   useEffect(() => {
     if (!txnId) return;
     setCapsule(null);
     setLoading(true);
+    setRemediationDone(null);
+    setOperatorNote('');
     getDecisionCapsule(txnId).then(r => {
       setCapsule(r.data);
       setLoading(false);
@@ -117,7 +122,7 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
           <div className="flex items-center gap-3">
             {capsule && stateStyle ? (
               <span className={`px-2.5 py-1 text-xs font-bold font-mono tracking-wider rounded border ${stateStyle.bg} ${stateStyle.text} ${stateStyle.border}`}>
-                {capsule.final_state === 'QUARANTINED' ? 'REVIEW REQUIRED' : stateStyle.label}
+                {capsule.final_state === 'QUARANTINED' ? 'ON HOLD' : stateStyle.label}
               </span>
             ) : (
               <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold font-mono rounded border border-blue-200">LOADING</span>
@@ -197,15 +202,15 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
                 </div>
               </div>
 
-              {/* Remediation — only for QUARANTINED */}
-              {capsule.final_state === 'QUARANTINED' && (
+              {/* Remediation — only for HOLD */}
+              {capsule.final_state === 'QUARANTINED' && !remediationDone && (
                 <div className="space-y-2">
-                  <div className="text-slate-800 font-bold uppercase text-[11px] tracking-wider font-mono">Operator Remediation Action</div>
+                  <div className="text-slate-800 font-bold uppercase text-[11px] tracking-wider font-mono">Operator Action</div>
                   <div className="space-y-2">
                     {[
-                      { id: 'transform', title: 'Approve & Forward',         desc: 'Convert the data to the required format and send it to the destination. A tamper-proof receipt is generated.', recommended: true },
-                      { id: 'request',   title: 'Ask Citizen to Resubmit',  desc: 'Send the citizen a notification via DigiLocker or SMS asking them to provide updated documents.', recommended: false },
-                      { id: 'reject',    title: 'Reject & Block',           desc: 'Mark this transaction as failed and alert the source system that it cannot proceed.', recommended: false },
+                      { id: 'transform', title: 'Approve & Forward',        desc: 'Convert the data to the required format and send it to the destination. A tamper-proof receipt is generated.', recommended: true },
+                      { id: 'request',   title: 'Ask Citizen to Resubmit', desc: 'Send the citizen a notification via DigiLocker or SMS asking them to provide updated documents.', recommended: false },
+                      { id: 'reject',    title: 'Reject & Block',          desc: 'Mark this transaction as failed and alert the source system that it cannot proceed.', recommended: false },
                     ].map(opt => (
                       <label key={opt.id} className={`flex items-start justify-between p-3.5 bg-white rounded cursor-pointer transition ${remediationChoice === opt.id ? 'border-2 border-blue-600 shadow-sm' : 'border border-slate-200 hover:bg-slate-50'}`}>
                         <div className="flex items-start gap-3">
@@ -219,6 +224,18 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
                       </label>
                     ))}
                   </div>
+                  <textarea
+                    placeholder="Operator note (optional)…"
+                    value={operatorNote}
+                    onChange={e => setOperatorNote(e.target.value)}
+                    rows={2}
+                    className="w-full mt-1 px-3 py-2 text-xs font-mono border border-slate-200 rounded resize-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-700 placeholder-slate-400"
+                  />
+                </div>
+              )}
+              {remediationDone && (
+                <div className="p-4 bg-emerald-50 border border-emerald-300 rounded text-emerald-800 text-xs font-mono font-bold">
+                  ✓ {remediationDone}
                 </div>
               )}
             </>
@@ -230,13 +247,26 @@ function InspectorDrawer({ txnId, onClose }: { txnId: string | null; onClose: ()
         {/* Footer */}
         <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between flex-shrink-0">
           <button className="px-4 py-2 text-xs font-bold font-mono uppercase text-slate-700 bg-slate-100 hover:bg-slate-200 transition border border-slate-200 rounded" onClick={onClose}>CLOSE</button>
-          {capsule?.final_state === 'QUARANTINED' && (
+          {capsule?.final_state === 'QUARANTINED' && !remediationDone && (
             <button
-              className="px-4 py-2 text-xs font-bold font-mono uppercase bg-[#FF9933] hover:bg-[#e6880a] text-[#111111] transition flex items-center gap-2 rounded shadow-sm"
-              onClick={() => { alert(`Safety action '${remediationChoice}' applied for ${txnId}. Audit ledger updated.`); onClose(); }}
+              disabled={remediating}
+              className="px-4 py-2 text-xs font-bold font-mono uppercase bg-[#FF9933] hover:bg-[#e6880a] text-[#111111] transition flex items-center gap-2 rounded shadow-sm disabled:opacity-60"
+              onClick={async () => {
+                if (!txnId) return;
+                setRemediating(true);
+                try {
+                  const r = await applyRemediation(txnId, remediationChoice, operatorNote);
+                  setRemediationDone(`Action recorded. Transaction is now ${r.data.new_status}.`);
+                  onRemediated?.();
+                } catch {
+                  setRemediationDone('Action failed — check server logs.');
+                } finally {
+                  setRemediating(false);
+                }
+              }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
-              CONFIRM & SEND
+              {remediating ? 'SAVING…' : 'CONFIRM & SEND'}
             </button>
           )}
         </div>
@@ -371,7 +401,7 @@ export default function App() {
                     <tr className="text-slate-500 border-b border-slate-200 font-mono uppercase text-[10px]">
                       <th className="pb-2 font-bold text-left">Transaction ID</th>
                       <th className="pb-2 font-bold text-left">Applicant</th>
-                      <th className="pb-2 font-bold text-left">Quarantine Reason</th>
+                      <th className="pb-2 font-bold text-left">Hold Reason</th>
                       <th className="pb-2 font-bold text-left">State v</th>
                       <th className="pb-2 font-bold text-right">Action</th>
                     </tr>
@@ -440,7 +470,7 @@ export default function App() {
                         <td className="py-2.5 text-[#1a237e] font-mono font-bold">{t.transaction_id}</td>
                         <td className="py-2.5 text-slate-800 font-medium">{t.applicant_name}</td>
                         <td className="py-2.5"><StatusBadge status={t.status} /></td>
-                        <td className="py-2.5"><span className={`font-mono text-[11px] font-bold ${t.safety_decision === 'QUARANTINE' ? 'text-amber-600' : t.safety_decision === 'PASS' ? 'text-emerald-600' : 'text-slate-300'}`}>{t.safety_decision || '—'}</span></td>
+                        <td className="py-2.5"><span className={`font-mono text-[11px] font-bold ${t.safety_decision === 'QUARANTINE' ? 'text-amber-600' : t.safety_decision === 'PASS' ? 'text-emerald-600' : 'text-slate-300'}`}>{t.safety_decision === 'QUARANTINE' ? 'HOLD' : t.safety_decision || '—'}</span></td>
                         <td className="py-2.5 text-center"><span className={t.effect_authorized ? 'text-emerald-600 font-bold' : 'text-slate-300'}>{t.effect_authorized ? '✓' : '—'}</span></td>
                         <td className="py-2.5 text-center"><span className={t.effect_observed ? 'text-emerald-600 font-bold' : 'text-slate-300'}>{t.effect_observed ? '✓' : '—'}</span></td>
                         <td className="py-2.5 text-right"><button className="px-2.5 py-1 bg-white border border-slate-200 text-slate-800 rounded font-bold hover:bg-slate-50 shadow-sm transition uppercase font-mono text-xs" onClick={e=>{e.stopPropagation();setSelectedTxnId(t.transaction_id);}}>VIEW</button></td>
@@ -462,6 +492,7 @@ export default function App() {
                   { id: 'EDU-001', name: 'Education Department',  color: '#0891b2', owner: 'UGC / Academic Bank of Credits', schema: 'v1.8', caps: ['enrollment_verify','marks_fetch','institution_verify'] },
                   { id: 'IDN-001', name: 'Identity Registry',     color: '#7c3aed', owner: 'NIC / Aadhaar Authority',         schema: 'v3.1', caps: ['identity_verify','dob_fetch','name_match'] },
                   { id: 'SCH-001', name: 'Scholarship & Welfare', color: '#059669', owner: 'Dept. of Social Welfare',         schema: 'v1.2', caps: ['eligibility_check','disbursement_auth','status_update'] },
+                  { id: 'HLT-001', name: 'Health & Housing Dept', color: '#d97706', owner: 'Ministry of Health / PMAY Nodal', schema: 'v1.0', caps: ['ration_verify','health_card_check','housing_eligibility'] },
                 ].map(sys => (
                   <div key={sys.id} className="bg-white border border-slate-200 rounded p-5 shadow-sm space-y-3">
                     <div className="flex items-center gap-3">
@@ -572,7 +603,7 @@ export default function App() {
                 {[
                   { label: 'Gateway Version', value: '2.0.0-prototype' },
                   { label: 'Safety Kernel', value: 'DETERMINISTIC v1 — ai_was_final_authority: ALWAYS FALSE' },
-                  { label: 'Prototype Disclaimer', value: 'SIH 2026 PS26129 — NSP Eligibility Verification Demo' },
+                  { label: 'Prototype Disclaimer', value: 'SIH 2026 PS26129 — Multi-department Information Safety Gateway Demo' },
                   { label: 'Environment', value: 'SIMULATION — No real government systems connected' },
                 ].map(item => (
                   <div key={item.label} className="bg-white border border-slate-200 rounded p-4 shadow-sm">
@@ -628,7 +659,7 @@ export default function App() {
                   { label: 'Revenue',       count: Math.max(txns.length, 4),    color: '#FF9933' },
                   { label: 'Identity & Edu',count: Math.max(Math.round(txns.length * 0.77), 3), color: '#FFB566' },
                   { label: 'Scholarship',   count: Math.max(Math.round(txns.length * 0.46), 2), color: '#ffd4a0' },
-                  { label: 'Others',        count: 1,                            color: '#e5e5e5' },
+                  { label: 'Health & Hsg',  count: Math.max(Math.round(txns.length * 0.28), 1), color: '#fbbf24' },
                 ].map((b, i) => {
                   const h = Math.min(Math.round((b.count / (txns.length + 4)) * 130), 120);
                   return (
@@ -640,7 +671,7 @@ export default function App() {
                 })}
               </div>
               <div className="grid grid-cols-4 text-center text-[10px] font-bold uppercase tracking-tight text-slate-500 pt-2 leading-tight">
-                <span>Revenue</span><span>Id &amp; Edu</span><span>Scholar</span><span>Others</span>
+                <span>Revenue</span><span>Id &amp; Edu</span><span>Scholar</span><span>Health</span>
               </div>
             </div>
 
@@ -659,7 +690,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {['Revenue Department','Identity & Education','Scholarship & Welfare'].map(sys => (
+                    {['Revenue Department','Identity & Education','Scholarship & Welfare','Health & Housing'].map(sys => (
                       <tr key={sys}>
                         <td className="py-2.5 text-slate-900 font-semibold">{sys}</td>
                         <td className="py-2.5">
@@ -675,7 +706,7 @@ export default function App() {
               </div>
               <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] font-mono">
                 <span className="flex items-center gap-1.5 font-bold text-emerald-600 uppercase">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> 3 / 3 BRIDGES OK
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> 4 / 4 BRIDGES OK
                 </span>
                 <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200 font-bold">PING: 14MS</span>
               </div>
@@ -740,7 +771,7 @@ export default function App() {
                           <td className="py-2 text-slate-800 font-medium">
                             <span className="flex items-center gap-1.5">
                               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: t.status === 'SUCCESS' ? '#138808' : t.status === 'QUARANTINED' ? '#FF9933' : t.status === 'REJECTED' ? '#e53935' : '#aaaaaa' }} />
-                              {t.status === 'SUCCESS' ? 'Transaction completed' : t.status === 'QUARANTINED' ? 'Moved to review queue' : t.status === 'REJECTED' ? 'Transaction blocked' : 'Transaction created'}
+                              {t.status === 'SUCCESS' ? 'Transaction completed' : t.status === 'QUARANTINED' ? 'Moved to hold queue' : t.status === 'REJECTED' ? 'Transaction blocked' : 'Transaction created'}
                             </span>
                           </td>
                           <td className="py-2 text-right font-mono text-[#1a237e] font-bold text-[11px]">{t.transaction_id}</td>
@@ -808,7 +839,7 @@ export default function App() {
                       <td className="py-2.5"><StatusBadge status={t.status} /></td>
                       <td className="py-2.5">
                         {t.safety_decision
-                          ? <span className={`font-mono text-[11px] font-bold ${t.safety_decision === 'QUARANTINE' ? 'text-amber-600' : t.safety_decision === 'PASS' ? 'text-emerald-600' : 'text-slate-500'}`}>{t.safety_decision}</span>
+                          ? <span className={`font-mono text-[11px] font-bold ${t.safety_decision === 'QUARANTINE' ? 'text-amber-600' : t.safety_decision === 'PASS' ? 'text-emerald-600' : 'text-slate-500'}`}>{t.safety_decision === 'QUARANTINE' ? 'HOLD' : t.safety_decision}</span>
                           : <span className="text-slate-300 font-mono">—</span>}
                       </td>
                       <td className="py-2.5 text-center"><span className={t.effect_authorized ? 'text-emerald-600 font-bold' : 'text-slate-300'}>{t.effect_authorized ? '✓' : '—'}</span></td>
@@ -832,7 +863,7 @@ export default function App() {
         </main>
       </div>
 
-      <InspectorDrawer txnId={selectedTxnId} onClose={() => setSelectedTxnId(null)} />
+      <InspectorDrawer txnId={selectedTxnId} onClose={() => setSelectedTxnId(null)} onRemediated={load} />
     </div>
   );
 }
