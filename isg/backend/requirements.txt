@@ -15,6 +15,5 @@ pytest-asyncio==0.23.7
 pytest-httpx==0.30.0
 hypothesis==6.104.2
 cryptography==42.0.8
-hashlib2==1.0.0
 python-dateutil==2.9.0
 structlog==24.2.0
