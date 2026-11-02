@@ -43,6 +43,7 @@ PROGRAMS = [
         "income_limit": 250000,
         "description": "Merit-cum-means scholarship for undergraduate and postgraduate students.",
         "legal_basis": "NSP_Guidelines_2024",
+        "annual_benefit_inr": 75000,
     },
     {
         "id": "PMJAY-001",
@@ -51,6 +52,7 @@ PROGRAMS = [
         "income_limit": 500000,
         "description": "Health cover of ₹5 lakh per family per year for secondary and tertiary care.",
         "legal_basis": "PMJAY_Act_2018",
+        "annual_benefit_inr": 500000,
     },
     {
         "id": "NFSA-001",
@@ -59,6 +61,7 @@ PROGRAMS = [
         "income_limit": 150000,
         "description": "Subsidised food grains under the National Food Security Act.",
         "legal_basis": "NFSA_2013",
+        "annual_benefit_inr": 12000,
     },
     {
         "id": "PMAY-001",
@@ -67,8 +70,105 @@ PROGRAMS = [
         "income_limit": 300000,
         "description": "Interest subsidy on home loans for economically weaker sections.",
         "legal_basis": "PMAY_Urban_Guidelines_2022",
+        "annual_benefit_inr": 267000,
+    },
+    {
+        "id": "PMKISAN-001",
+        "name": "PM-KISAN (Farmer Income Support)",
+        "dept": "Ministry of Agriculture",
+        "income_limit": 200000,
+        "description": "Direct income support of ₹6,000/year to eligible farmer families.",
+        "legal_basis": "PMKISAN_Guidelines_2019",
+        "annual_benefit_inr": 6000,
+    },
+    {
+        "id": "AAY-001",
+        "name": "Antyodaya Anna Yojana",
+        "dept": "Civil Supplies / PDS",
+        "income_limit": 80000,
+        "description": "Highly subsidised food grains (35 kg/month) for the poorest families.",
+        "legal_basis": "NFSA_2013_AAY",
+        "annual_benefit_inr": 18000,
     },
 ]
+
+# ── Fraud intelligence heuristics ────────────────────────────────────────────
+
+def _run_fraud_heuristics(profile: "CitizenProfile") -> dict:
+    signals = []
+    score = 0
+
+    # H1: Income is in hold state (semantic or identity issue)
+    if profile.verification_status == "HOLD":
+        signals.append({
+            "code": "PROFILE_ON_HOLD",
+            "severity": "HIGH",
+            "weight": 40,
+            "detail": profile.hold_reason or "Profile flagged for human review.",
+        })
+        score += 40
+
+    # H2: Income suspiciously close to a program threshold
+    if profile.income_annual_inr and profile.verification_status == "VERIFIED":
+        for prog in PROGRAMS:
+            ratio = profile.income_annual_inr / prog["income_limit"]
+            if 0.92 <= ratio <= 1.0:
+                signals.append({
+                    "code": "INCOME_NEAR_THRESHOLD",
+                    "severity": "MEDIUM",
+                    "weight": 20,
+                    "detail": (
+                        f"Income ₹{profile.income_annual_inr:,} is within 8% of "
+                        f"{prog['name']} limit ₹{prog['income_limit']:,}."
+                    ),
+                })
+                score += 20
+                break
+
+    # H3: Missing residency — could indicate ghost beneficiary
+    if not profile.residency_district:
+        signals.append({
+            "code": "RESIDENCY_UNVERIFIED",
+            "severity": "MEDIUM",
+            "weight": 15,
+            "detail": "No verified district on record — address source unavailable.",
+        })
+        score += 15
+
+    # H4: Missing identity evidence
+    if not profile.identity_evidence_type:
+        signals.append({
+            "code": "IDENTITY_UNVERIFIED",
+            "severity": "HIGH",
+            "weight": 30,
+            "detail": "Identity evidence not confirmed — Aadhaar/registry check failed.",
+        })
+        score += 30
+
+    # H5: Income in extreme low range (possible under-declaration)
+    if profile.income_annual_inr is not None and profile.income_annual_inr < 10000:
+        signals.append({
+            "code": "SUSPICIOUSLY_LOW_INCOME",
+            "severity": "LOW",
+            "weight": 10,
+            "detail": f"Declared annual income ₹{profile.income_annual_inr:,} is unusually low.",
+        })
+        score += 10
+
+    score = min(score, 100)
+    if score >= 60:
+        risk_level = "HIGH"
+    elif score >= 25:
+        risk_level = "MEDIUM"
+    else:
+        risk_level = "LOW"
+
+    return {
+        "fraud_risk_score": score,
+        "risk_level": risk_level,
+        "signals": signals,
+        "signal_count": len(signals),
+    }
 
 
 def _check_eligibility(income_annual: Optional[int]) -> list[dict]:
@@ -417,3 +517,123 @@ async def agent_enroll(body: AgentEnrollRequest, db: Session = Depends(get_db)):
             "agent_id": body.agent_id,
             "citizen_id": body.citizen_id,
         }
+
+
+@router.get("/fraud-score/{citizen_id}")
+async def fraud_score(citizen_id: str, db: Session = Depends(get_db)):
+    """
+    Run fraud intelligence heuristics against a verified profile.
+    Returns a risk score 0-100 and the specific signals detected.
+    """
+    profile = db.query(CitizenProfile).filter_by(citizen_id=citizen_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="No profile found. Run /verify first.")
+    result = _run_fraud_heuristics(profile)
+    return {
+        "citizen_id": citizen_id,
+        "name": profile.name,
+        "verification_status": profile.verification_status,
+        **result,
+        "assessed_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@router.get("/discover/{citizen_id}")
+async def discover_benefits(citizen_id: str, db: Session = Depends(get_db)):
+    """
+    Find programs the citizen qualifies for based on their verified profile.
+    Returns eligible programs with estimated annual benefit value.
+    """
+    profile = db.query(CitizenProfile).filter_by(citizen_id=citizen_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="No profile found. Run /verify first.")
+
+    if profile.verification_status != "VERIFIED" or not profile.income_annual_inr:
+        return {
+            "citizen_id": citizen_id,
+            "eligible_programs": [],
+            "total_annual_benefit_inr": 0,
+            "note": "Profile must be VERIFIED before benefit discovery.",
+        }
+
+    eligible = [
+        {
+            "id": p["id"],
+            "name": p["name"],
+            "dept": p["dept"],
+            "description": p["description"],
+            "annual_benefit_inr": p["annual_benefit_inr"],
+            "income_limit": p["income_limit"],
+            "reason": f"Annual income ₹{profile.income_annual_inr:,} within ₹{p['income_limit']:,} limit.",
+        }
+        for p in PROGRAMS
+        if profile.income_annual_inr <= p["income_limit"]
+    ]
+    total_benefit = sum(p["annual_benefit_inr"] for p in eligible)
+
+    return {
+        "citizen_id": citizen_id,
+        "name": profile.name,
+        "income_annual_inr": profile.income_annual_inr,
+        "eligible_programs": eligible,
+        "eligible_count": len(eligible),
+        "total_annual_benefit_inr": total_benefit,
+        "note": (
+            f"{len(eligible)} programs available. "
+            f"Estimated ₹{total_benefit:,}/year in benefits. "
+            "No separate applications needed — one verified profile covers all."
+        ),
+    }
+
+
+@router.get("/analytics")
+async def get_analytics(db: Session = Depends(get_db)):
+    """
+    Live system analytics drawn from the citizen profile database.
+    Shows verification volume, hold rate, program enrollment, and fraud metrics.
+    """
+    profiles = db.query(CitizenProfile).all()
+    total = len(profiles)
+    verified = [p for p in profiles if p.verification_status == "VERIFIED"]
+    on_hold = [p for p in profiles if p.verification_status == "HOLD"]
+
+    # Program enrollment counts
+    program_counts: dict[str, int] = {p["id"]: 0 for p in PROGRAMS}
+    total_income_verified = 0
+    for p in verified:
+        if p.income_annual_inr:
+            total_income_verified += p.income_annual_inr
+        for prog in (p.programs_eligible or []):
+            if prog.get("eligible") and prog["id"] in program_counts:
+                program_counts[prog["id"]] += 1
+
+    # Fraud prevented estimate: avg benefit × hold count
+    avg_benefit = 200000
+    fraud_prevented_inr = len(on_hold) * avg_benefit
+
+    hold_rate = round(len(on_hold) / total * 100, 1) if total > 0 else 0.0
+
+    return {
+        "total_profiles": total,
+        "verified_count": len(verified),
+        "hold_count": len(on_hold),
+        "hold_rate_pct": hold_rate,
+        "total_income_verified_inr": total_income_verified,
+        "fraud_signals_caught": len(on_hold),
+        "estimated_fraud_prevented_inr": fraud_prevented_inr,
+        "program_enrollment_counts": program_counts,
+        "programs": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "enrolled": program_counts.get(p["id"], 0),
+            }
+            for p in PROGRAMS
+        ],
+        "source_systems_live": [
+            "INDIA_POST_PINCODE_API_v1",
+            "UIDAI_AADHAAR_v2.0",
+            "CBDT_EFILING_DIGILOCKER_v1",
+        ],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }

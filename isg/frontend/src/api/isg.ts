@@ -132,3 +132,12 @@ export const getCitizenProfile = (citizenId: string) =>
 
 export const agentEnroll = (citizenId: string, programId: string) =>
   api.post('/api/citizen/agent/enroll', { citizen_id: citizenId, program_id: programId });
+
+export const getFraudScore = (citizenId: string) =>
+  api.get(`/api/citizen/fraud-score/${citizenId}`);
+
+export const discoverBenefits = (citizenId: string) =>
+  api.get(`/api/citizen/discover/${citizenId}`);
+
+export const getCitizenAnalytics = () =>
+  api.get('/api/citizen/analytics');
