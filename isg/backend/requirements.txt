@@ -17,3 +17,4 @@ hypothesis==6.104.2
 cryptography==42.0.8
 python-dateutil==2.9.0
 structlog==24.2.0
+defusedxml==0.7.1

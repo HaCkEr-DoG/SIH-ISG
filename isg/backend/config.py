@@ -16,6 +16,17 @@ class Settings(BaseSettings):
     isg_version: str = "1.0.0-prototype"
     environment: str = "demo"
 
+    # DigiLocker API (income / ITR pull)
+    digilocker_client_id: str = ""
+    digilocker_client_secret: str = ""
+    digilocker_sandbox: bool = True
+    digilocker_redirect_uri: str = "http://localhost:8000/api/citizen/digilocker/callback"
+
+    # UIDAI Aadhaar (demographic verification)
+    uidai_aua_code: str = ""
+    uidai_api_key: str = ""
+    uidai_sandbox: bool = True
+
     identity_match_threshold_high_consequence: float = 0.95
     identity_match_threshold_low_consequence: float = 0.80
     lease_ttl_seconds: int = 300
